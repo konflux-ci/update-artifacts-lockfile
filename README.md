@@ -19,9 +19,12 @@ artifacts:
 
 ```
 update_artifacts_lockfile [path/to/artifacts.lock.yaml]
+update_artifacts_lockfile -f "$RENOVATE_POST_UPGRADE_COMMAND_DATA_FILE"
 ```
 
 Defaults to `artifacts.lock.yaml` in the current directory if no path is given.
+The `-f` form reads Renovate's JSON data file and updates each unique
+`packageFile` path listed in it.
 
 ## MintMaker integration
 
@@ -29,16 +32,19 @@ Add to your `renovate.json` `postUpgradeTasks`:
 
 ```json
 "postUpgradeTasks": {
-  "commands": ["update_artifacts_lockfile ci/hermetic/artifacts.lock.yaml"],
-  "fileFilters": ["ci/hermetic/artifacts.lock.yaml"],
-  "executionMode": "update"
+  "commands": [
+    "update_artifacts_lockfile -f \"$RENOVATE_POST_UPGRADE_COMMAND_DATA_FILE\""
+  ],
+  "dataFileTemplate": "[{{#each upgrades}}{\"packageFile\": \"{{{packageFile}}}\"}{{#unless @last}},{{/unless}}{{/each}}]",
+  "fileFilters": ["**/artifacts.lock.yaml"],
+  "executionMode": "branch"
 }
 ```
 
 ## Installation
 
 ```
-pipx install git+https://github.com/konflux-ci/update-artifacts-lockfile.git@v0.1.0
+pipx install git+https://github.com/konflux-ci/update-artifacts-lockfile.git@v0.2.0
 ```
 
 ## Development
