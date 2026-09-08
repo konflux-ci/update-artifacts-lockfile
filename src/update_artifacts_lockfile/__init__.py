@@ -1,7 +1,8 @@
 """Update artifact checksums in a YAML lockfile."""
 
+import argparse
 import hashlib
-import sys
+import json
 from typing import Any, Dict, List, Optional
 
 import requests
@@ -102,5 +103,21 @@ def update_artifact_checksums(yaml_file_path: str) -> None:
 
 def main() -> None:
     """Entry point for the update_artifacts_lockfile command."""
-    yaml_file_path = sys.argv[1] if len(sys.argv) > 1 else "artifacts.lock.yaml"
-    update_artifact_checksums(yaml_file_path)
+    parser = argparse.ArgumentParser(description="Refresh checksums in an artifacts lockfile.")
+    parser.add_argument("-f", "--file", type=argparse.FileType("r"))
+    parser.add_argument(
+        "yaml_file_path",
+        nargs="?",
+        default="artifacts.lock.yaml",
+        help="lockfile to update (default: artifacts.lock.yaml)",
+    )
+    args = parser.parse_args()
+
+    if args.file:
+        package_files = dict.fromkeys(
+            upgrade["packageFile"] for upgrade in json.load(args.file)
+        )
+        for package_file in package_files:
+            update_artifact_checksums(package_file)
+    else:
+        update_artifact_checksums(args.yaml_file_path)
